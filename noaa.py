@@ -40,9 +40,9 @@ def fetch(message="liib", station=None):
             # so put it on the todo list
             if u.endswith("/"):
                 todo.append(u)
-            # if it's a url to a wanted message (matches both message and station)
+            # if it's a url to a text file (and optionally matches message and station),
             # then fetch it and save it
-            elif (not message or message in u) and (not station or station in u):
+            elif u.endswith(".txt") and (not message or message in u) and (not station or station in u):
                 print(u)
                 # create a filename for it inside a folder called "noaa"
                 fn = u.replace("https://tgftp.nws.noaa.gov/data/raw/", "noaa/")
