@@ -58,4 +58,4 @@ def fetch(message="liib", station=None):
 
 if __name__ == '__main__':
     import fire
-    fire.Fire()
+    fire.Fire(fetch)
