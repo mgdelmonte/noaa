@@ -38,7 +38,7 @@ def fetch(message="liib", station=None):
                 continue
             # if u ends with a slash, then it's a url to another directory listing,
             # so put it on the todo list
-            if u.endswith("/"):
+            if u.endswith("/") and (not station or station in u):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station),
             # then fetch it and save it
