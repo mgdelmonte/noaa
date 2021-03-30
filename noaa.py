@@ -1,6 +1,5 @@
 import os
 import requests
-import fire
 import lxml.html
 from six.moves import urllib
 
