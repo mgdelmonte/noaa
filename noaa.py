@@ -10,12 +10,12 @@ def fetch(station="liib", message=None):
     :param station: file must have ".{station}." in the URL
     :param message: file must have "/{message}/" in the URL
     """
-    # station and message should both be lowercase and delimited
+    print("searching NOAA %s for %s messages:" % (station or "(all stations)", message or "all"))
+    # station and message should both be lowercase and delimited for matching in URLs
     if station:
         station = "." + station.lower() + "."
     if message:
         message = "/" + message.lower() + "/"
-    print("searching NOAA %s for %s messages:" % (station or "(all stations)", message or "all"))
     session = requests.session()
     # todo is a list of all the URLs we want to fetch
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
