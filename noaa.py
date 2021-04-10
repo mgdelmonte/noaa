@@ -4,18 +4,18 @@ import lxml.html
 from six.moves import urllib
 
 
-def fetch(message="liib", station=None):
-    """Fetches all NOAA files, optionally matching message and/or station,
+def fetch(station="liib", message=None):
+    """Fetches all NOAA files, optionally matching station and/or message,
     and saves them in a folder called "noaa".
-    :param message: file must have ".{message}." in the URL
-    :param station: file must have "/{station}/" in the URL
+    :param station: file must have ".{station}." in the URL
+    :param message: file must have "/{message}/" in the URL
     """
-    # message and station should both be lowercase and delimited
-    if message:
-        message = "."+message.lower()+"."
+    # station and message should both be lowercase and delimited
     if station:
-        station = "/"+station.lower()+"/"
-    print("searching NOAA %s for %s files:" % (station or "(all stations)", message or "all"))
+        station = "." + station.lower() + "."
+    if message:
+        message = "/" + message.lower() + "/"
+    print("searching NOAA %s for %s messages:" % (station or "(all stations)", message or "all"))
     session = requests.session()
     # todo is a list of all the URLs we want to fetch
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
@@ -56,10 +56,10 @@ def fetch(message="liib", station=None):
             if len(u) <= len(url):
                 continue
             # if u ends with a slash, then it's a url to another directory listing, so put it on the todo list
-            if u.endswith("/") and (not station or station in u):
+            if u.endswith("/") and (not message or message in u):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station), also put it on the todo list
-            elif u.endswith(".txt") and (not message or message in u) and (not station or station in u):
+            elif u.endswith(".txt") and (not station or station in u) and (not message or message in u):
                 todo.append(u)
 
 
