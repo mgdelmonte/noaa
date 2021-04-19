@@ -1,3 +1,5 @@
+import datetime
+import re
 import os
 import requests
 import lxml.html
@@ -6,14 +8,21 @@ from six.moves import urllib
 
 def fetch(station="liib", message=None):
     """Fetches all NOAA files, optionally matching station and/or message,
-    and saves them in a folder called "noaa".
-    :param station: file must have ".{station}." in the URL
+    and saves them in datetime-labeled folder (YYYYMMDDHH).
+    :param station: file must have ".{station}." in the URL; default=liib
+        station can be a comma-separated list of stations; if blank, gets all stations
     :param message: file must have "/{message}/" in the URL
     """
-    print("searching NOAA %s for %s messages:" % (station or "(all stations)", message or "all"))
+    # store in a datetime-labeled folder
+    dn = datetime.datetime.now().strftime("%Y%m%d%H")
+    print("storing NOAA %s messages from %s into %s:" % (message or "all", station or "(all stations)", dn))
+    dn = dn + '/'
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
-        station = "." + station.lower() + "."
+        # station = "." + station.lower() + "."
+        if isinstance(station, str):
+            station = [i.strip() for i in station.split(',')]
+        station = re.compile(r"(?i)\.(%s)\." % "|".join(station).lower())
     if message:
         message = "/" + message.lower() + "/"
     session = requests.session()
@@ -38,8 +47,8 @@ def fetch(station="liib", message=None):
             if 'text/plain' not in contenttype:
                 print("got %s instead of text; skipping" % contenttype)
                 continue
-            # create a filename for it inside a folder called "noaa"
-            fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", "noaa/")
+            # create a filename for it inside the dn folder
+            fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", dn)
             # the path is the place where the file will be stored on the hard drive
             path = fn.rsplit('/', 1)[0]
             # create the path (the folders) if they don't already exist
@@ -59,7 +68,7 @@ def fetch(station="liib", message=None):
             if u.endswith("/") and (not message or message in u):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station), also put it on the todo list
-            elif u.endswith(".txt") and (not station or station in u) and (not message or message in u):
+            elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message in u):
                 todo.append(u)
 
 
