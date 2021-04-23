@@ -1,4 +1,5 @@
 import datetime
+import glob
 import re
 import os
 import requests
@@ -72,7 +73,22 @@ def fetch(station="liib", message=None):
                 todo.append(u)
 
 
+def combine(dir):
+    """Combines all files in the directory in a single file, named gts.txt
+    :param dir: the directory to combine"""
+    def readfile(fn):
+        try:
+            with open(fn, "r") as f:
+                return f.read().strip()
+        except Exception as e:
+            print(f"skipping {fn}: {e}")
+    data = "\n\n".join(info for fn in glob.glob(f"{dir}/**/*.txt", recursive=True) if not fn.endswith("gts.txt") and (info := readfile(fn)))
+    with open(f"{dir}/gts.txt", "w") as f:
+        f.write(data)
+    print(f"wrote {len(data):,} bytes as gts.txt")
+
 
 if __name__ == '__main__':
     import fire
-    fire.Fire(fetch)
+    fire.Fire()
+
