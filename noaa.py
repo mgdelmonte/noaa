@@ -4,7 +4,24 @@ import re
 import os
 import requests
 import lxml.html
-from six.moves import urllib
+import urllib
+
+
+def combine(dir):
+    """Combines all files in the directory in a single file named {dir}gts.txt
+    :param dir: the directory to combine"""
+    dir = str(dir)
+    def readfile(fn):
+        try:
+            with open(fn, "r") as f:
+                return f.read().strip()
+        except Exception as e:
+            print(f"skipping {fn}: {e}")
+    data = "\n\n".join(info for fn in glob.glob(f"{dir}/**/*.txt", recursive=True) if (info := readfile(fn)))
+    gtsfn = f"{dir}gts.txt"
+    with open(gtsfn, "w") as f:
+        f.write(data)
+    print(f"wrote {len(data):,} bytes as {gtsfn}")
 
 
 def fetch(station="liib", message=None):
@@ -13,11 +30,11 @@ def fetch(station="liib", message=None):
     :param station: file must have ".{station}." in the URL; default=liib
         station can be a comma-separated list of stations; if blank, gets all stations
     :param message: file must have "/{message}/" in the URL
+        message can be a comma-separated list of messages; if blank, gets all messages
     """
     # store in a datetime-labeled folder
-    dn = datetime.datetime.now().strftime("%Y%m%d%H")
-    print("storing NOAA %s messages from %s into %s:" % (message or "all", station or "(all stations)", dn))
-    dn = dn + '/'
+    dir = datetime.datetime.now().strftime("%Y%m%d%H")
+    print("storing NOAA %s messages from %s into %s:" % (message or "all", station or "(all stations)", dir))
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
         # station = "." + station.lower() + "."
@@ -25,7 +42,10 @@ def fetch(station="liib", message=None):
             station = [i.strip() for i in station.split(',')]
         station = re.compile(r"(?i)\.(%s)\." % "|".join(station).lower())
     if message:
-        message = "/" + message.lower() + "/"
+        if isinstance(message, str):
+            message = [i.strip() for i in message.split(',')]
+        # message = "/" + message.lower() + "/"
+        message = re.compile(r"(?i)/(%s)/" % "|".join(message).lower())
     session = requests.session()
     # todo is a list of all the URLs we want to fetch
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
@@ -39,17 +59,17 @@ def fetch(station="liib", message=None):
             print("unable to get page; skipping")
             continue
         if not page.ok:
-            print("got status %s; skipping" % page.status_code)
+            print(f"got status {page.status_code}; skipping")
             continue
         # we got a text file, save it
         if url.endswith(".txt"):
             # verify that it's text
             contenttype = page.headers.get("content-type") or ""
             if 'text/plain' not in contenttype:
-                print("got %s instead of text; skipping" % contenttype)
+                print(f"got {contenttype} instead of text; skipping")
                 continue
             # create a filename for it inside the dn folder
-            fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", dn)
+            fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", dir+"/")
             # the path is the place where the file will be stored on the hard drive
             path = fn.rsplit('/', 1)[0]
             # create the path (the folders) if they don't already exist
@@ -66,27 +86,12 @@ def fetch(station="liib", message=None):
             if len(u) <= len(url):
                 continue
             # if u ends with a slash, then it's a url to another directory listing, so put it on the todo list
-            if u.endswith("/") and (not message or message in u):
+            if u.endswith("/") and (not message or message.search(u)):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station), also put it on the todo list
-            elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message in u):
+            elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message.search(u)):
                 todo.append(u)
-
-
-def combine(dir):
-    """Combines all files in the directory in a single file, named gts.txt
-    :param dir: the directory to combine"""
-    dir = str(dir)
-    def readfile(fn):
-        try:
-            with open(fn, "r") as f:
-                return f.read().strip()
-        except Exception as e:
-            print(f"skipping {fn}: {e}")
-    data = "\n\n".join(info for fn in glob.glob(f"{dir}/**/*.txt", recursive=True) if not fn.endswith("gts.txt") and (info := readfile(fn)))
-    with open(os.path.join(dir, "gts.txt"), "w") as f:
-        f.write(data)
-    print(f"wrote {len(data):,} bytes as gts.txt")
+    combine(dir)
 
 
 if __name__ == '__main__':
