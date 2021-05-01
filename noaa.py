@@ -6,13 +6,12 @@ import requests
 import lxml.html
 import urllib
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 
 
-def str2date(s):
-    try: return datetime.datetime.strptime(s, '%Y-%m-%d').date()
-    except:
-        try: return parse(s).date()
-        except: return datetime.datetime.now().date()
+def datehour_of(s):
+    try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d%H")
+    except: return parse(s).strftime("%Y%m%d%H")
 
 
 def combine(dir):
@@ -32,31 +31,29 @@ def combine(dir):
     print(f"wrote {len(data):,} bytes as {gtsfn}")
 
 
-def fetch(station=None, message=None, date=None, dir=None):
+def fetch(station=None, message=None, datehour=None, dir=None):
     """Fetches all NOAA files, optionally matching station and/or message,
     and saves them in datetime-labeled folder (YYYYMMDDHH).
     :param station: file must have ".{station}." in the URL; default=liib
         station can be a comma-separated list of stations; defaults to all stations
     :param message: file must have "/{message}/" in the URL
         message can be a comma-separated list of messages; defaults to all messages
-    :param date: the date to fetch; if blank, defaults to today
+    :param datehour: the date+hour to fetch in GMT; if blank, defaults to the previous hour
     :param dir: the directory to store data into; defaults to same value as date
     """
+    datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
+    dir = str(dir or datehour)
     print("storing NOAA %s messages from %s" % (message or "all", station or "(all stations)"))
+    print(f"for {datehour} GMT%s" % (f" into {dir}" if dir != datehour else ""))
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
-        # station = "." + station.lower() + "."
         if isinstance(station, str):
             station = [i.strip() for i in station.split(',')]
         station = re.compile(r"(?i)\.(%s)\." % "|".join(station).lower())
     if message:
         if isinstance(message, str):
             message = [i.strip() for i in message.split(',')]
-        # message = "/" + message.lower() + "/"
         message = re.compile(r"(?i)/(%s)/" % "|".join(message).lower())
-    date = str2date(date)
-    dir = dir or date.strftime("%Y%m%d") # was datetime.datetime.now().strftime("%Y%m%d%H")
-    print(f"for {date} into {dir}")
     session = requests.session()
     # todo is a list of all the URLs we want to fetch
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
@@ -101,8 +98,8 @@ def fetch(station=None, message=None, date=None, dir=None):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station and dates), also put it on the todo list
             elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message.search(u)):
-                modified = str2date(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text.split(' ')[0])
-                if modified == date:
+                modified = datehour_of(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text)
+                if modified == datehour:
                     todo.append(u)
     combine(dir)
 
