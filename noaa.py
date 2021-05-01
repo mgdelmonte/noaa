@@ -8,15 +8,11 @@ import urllib
 from dateutil.parser import parse
 
 
-def date(s):
-    if s and "*" not in s:
-        try:
-            return datetime.datetime.strptime(s, '%Y-%m-%d').date()
-        except:
-            try:
-                return parse(s).date()
-            except:
-                pass
+def str2date(s):
+    try: return datetime.datetime.strptime(s, '%Y-%m-%d').date()
+    except:
+        try: return parse(s).date()
+        except: return datetime.datetime.now().date()
 
 
 def combine(dir):
@@ -36,16 +32,15 @@ def combine(dir):
     print(f"wrote {len(data):,} bytes as {gtsfn}")
 
 
-def fetch(station=None, message=None, dates=None, dir=None):
+def fetch(station=None, message=None, date=None, dir=None):
     """Fetches all NOAA files, optionally matching station and/or message,
     and saves them in datetime-labeled folder (YYYYMMDDHH).
     :param station: file must have ".{station}." in the URL; default=liib
         station can be a comma-separated list of stations; defaults to all stations
     :param message: file must have "/{message}/" in the URL
         message can be a comma-separated list of messages; defaults to all messages
-    :param dates: the dates to fetch; if blank, defaults to today
-        dates can be a comma-separated pair of (start,end), or * (get all dates)
-    :param dir: the directory to store data into; defaults to same value as dates
+    :param date: the date to fetch; if blank, defaults to today
+    :param dir: the directory to store data into; defaults to same value as date
     """
     print("storing NOAA %s messages from %s" % (message or "all", station or "(all stations)"))
     # station and message should both be lowercase and delimited for matching in URLs
@@ -59,16 +54,9 @@ def fetch(station=None, message=None, dates=None, dir=None):
             message = [i.strip() for i in message.split(',')]
         # message = "/" + message.lower() + "/"
         message = re.compile(r"(?i)/(%s)/" % "|".join(message).lower())
-    if dates:
-        if isinstance(dates, str):
-            dates = tuple((dates + (',' if ',' not in dates else '')).split(','))
-        if isinstance(dates, tuple):
-            dates = [date(i) for i in dates]
-    else:
-        dates = [datetime.datetime.now().date(), datetime.datetime.now().date()]
-    when = str("all dates" if not any(dates) else dates[0] if dates[0]==dates[1] else f"{dates[0]}-{dates[1]}")
-    dir = dir or when.replace(" ", "_") # was datetime.datetime.now().strftime("%Y%m%d%H")
-    print(f"for {when} into {dir}")
+    date = str2date(date)
+    dir = dir or date.strftime("%Y%m%d") # was datetime.datetime.now().strftime("%Y%m%d%H")
+    print(f"for {date} into {dir}")
     session = requests.session()
     # todo is a list of all the URLs we want to fetch
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
@@ -113,8 +101,8 @@ def fetch(station=None, message=None, dates=None, dir=None):
                 todo.append(u)
             # if it's a url to a text file (and optionally matches message and station and dates), also put it on the todo list
             elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message.search(u)):
-                modified = date(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text.split(' ')[0])
-                if not dates or ((dates[0] or modified) <= modified <= (dates[1] or modified)):
+                modified = str2date(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text.split(' ')[0])
+                if modified == date:
                     todo.append(u)
     combine(dir)
 
