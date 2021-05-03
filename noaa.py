@@ -45,6 +45,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     dir = str(dir or datehour)
     print("storing NOAA %s messages from %s" % (message or "all", station or "(all stations)"))
     print(f"for {datehour} GMT%s" % (f" into {dir}" if dir != datehour else ""))
+    print(f"UTC time is {datetime.datetime.utcnow()}")
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
         if isinstance(station, str):
