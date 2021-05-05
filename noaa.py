@@ -9,14 +9,19 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 
+def date_of(s):
+    try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d")
+    except: return parse(s).strftime("%Y%m%d")
+
+
 def datehour_of(s):
     try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d%H")
     except: return parse(s).strftime("%Y%m%d%H")
 
 
 def combine(dir):
-    """Combines all files in the directory in a single file named {dir}gts.txt
-    :param dir: the directory to combine"""
+    """Combines all files in the directory in a single file named {DATE}gts.txt
+    :param dir: the directory to combine; should be named by date or date+hour"""
     dir = str(dir)
     def readfile(fn):
         try:
@@ -25,7 +30,7 @@ def combine(dir):
         except Exception as e:
             print(f"skipping {fn}: {e}")
     data = "\n\n".join(info for fn in glob.glob(f"{dir}/**/*.txt", recursive=True) if (info := readfile(fn)))
-    gtsfn = f"{dir}gts.txt"
+    gtsfn = f"{dir[:8]}gts.txt"
     with open(gtsfn, "w") as f:
         f.write(data)
     print(f"wrote {len(data):,} bytes as {gtsfn}")
@@ -38,14 +43,13 @@ def fetch(station=None, message=None, datehour=None, dir=None):
         station can be a comma-separated list of stations; defaults to all stations
     :param message: file must have "/{message}/" in the URL
         message can be a comma-separated list of messages; defaults to all messages
-    :param datehour: the date+hour to fetch in GMT; if blank, defaults to the previous hour
-    :param dir: the directory to store data into; defaults to same value as date
+    :param datehour: the date or date+hour to fetch; if blank, defaults to "today"
+    :param dir: the directory to store data into; defaults to same value as datehour
     """
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour)
-    print("storing NOAA %s messages from %s" % (message or "all", station or "(all stations)"))
-    print(f"for {datehour} GMT%s" % (f" into {dir}" if dir != datehour else ""))
     print(f"UTC time is {datetime.datetime.utcnow()}")
+    print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
         if isinstance(station, str):
@@ -60,7 +64,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
     while todo:
         url = todo.pop()
-        print(url)
+        # print(url)
         try:
             page = session.get(url)
         except Exception as e:
@@ -100,7 +104,9 @@ def fetch(station=None, message=None, datehour=None, dir=None):
             # if it's a url to a text file (and optionally matches message and station and dates), also put it on the todo list
             elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message.search(u)):
                 modified = datehour_of(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text)
-                if modified == datehour:
+                # if modified == datehour: # would match date+hour
+                if modified[:8] == datehour[:8]: # match only date
+                    print(f"fetching {modified} {u}")
                     todo.append(u)
     combine(dir)
 
