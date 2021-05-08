@@ -47,7 +47,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     :param dir: the directory to store data into; defaults to same value as datehour
     """
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
-    dir = str(dir or datehour)
+    dir = str(dir or datehour[:8])
     print(f"UTC time is {datetime.datetime.utcnow()}")
     print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
     # station and message should both be lowercase and delimited for matching in URLs
@@ -106,7 +106,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
                 modified = datehour_of(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text)
                 # if modified == datehour: # would match date+hour
                 if modified[:8] == datehour[:8]: # match only date
-                    print(f"fetching {modified} {u}")
+                    print(f"{modified} {u}")
                     todo.append(u)
     combine(dir)
 
