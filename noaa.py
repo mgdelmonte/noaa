@@ -3,6 +3,7 @@ import glob
 import re
 import os
 import requests
+import time
 import lxml.html
 import urllib
 from dateutil.parser import parse
@@ -109,6 +110,21 @@ def fetch(station=None, message=None, datehour=None, dir=None):
                     print(f"{modified} {u}")
                     todo.append(u)
     combine(dir)
+
+
+def scan(hours=1, station=None, message=None):
+    """Perform the "fetch" command continuously at intervals.
+    :param interval: the time between fetches, in hours; defaults to 1
+    :param station: file must have ".{station}." in the URL; default=liib
+        station can be a comma-separated list of stations; defaults to all stations
+    :param message: file must have "/{message}/" in the URL
+        message can be a comma-separated list of messages; defaults to all messages
+    """
+    while True:
+        next = datetime.datetime.now()+relativedelta(hours=hours)
+        fetch(station, message)
+        print(f"sleeping until {next}...")
+        time.sleep((next-datetime.datetime.now()).total_seconds())
 
 
 if __name__ == '__main__':
