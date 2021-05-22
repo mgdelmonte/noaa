@@ -40,7 +40,7 @@ def combine(dir):
 def fetch(station=None, message=None, datehour=None, dir=None):
     """Fetches all NOAA files, optionally matching station and/or message,
         and saves them in date-labeled folder (YYYYMMDD).
-        The files will have the date+hour appended to their filenames.
+        The files will have the date+hour prepended to their filenames.
     :param station: file must have ".{station}." in the URL; default=liib
         station can be a comma-separated list of stations; defaults to all stations
     :param message: file must have "/{message}/" in the URL
@@ -83,10 +83,10 @@ def fetch(station=None, message=None, datehour=None, dir=None):
             if 'text/plain' not in contenttype:
                 print(f"got {contenttype} instead of text; skipping")
                 continue
-            # create a filename for it inside the dn folder
+            # create a filename for it inside the dn folder, and prepend the modified date+hour
             fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", dir+"/")
-            # append the modified date+hour
-            fn = fn.replace(".txt", datehour_of(page.headers['last-modified']) + ".txt")
+            fn = re.sub("/([^/]+)$", "/"+datehour_of(page.headers['last-modified'])+r'-\1', fn)
+            # +datehour_of(page.headers['last-modified'])+'-'
             # the path is the place where the file will be stored on the hard drive
             path = fn.rsplit('/', 1)[0]
             # create the path (the folders) if they don't already exist
