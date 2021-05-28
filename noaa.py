@@ -30,7 +30,11 @@ def combine(dir):
                 return "\n".join((fn, f.read().strip()))
         except Exception as e:
             print(f"skipping {fn}: {e}")
-    data = "\n\n".join(info for fn in glob.glob(f"{dir}/**/*.txt", recursive=True) if (info := readfile(fn)))
+
+    files = glob.glob(f"{dir}/**/*.txt", recursive=True)
+    # sort by filename, which is {datehour}-{message}{submessage}{messageid}.{station}..{ext}
+    files.sort(key=lambda fn: os.path.split(fn)[1])
+    data = "\n\n".join(info for fn in files if (info := readfile(fn)))
     gtsfn = f"{dir[:8]}gts.txt"
     with open(gtsfn, "w") as f:
         f.write(data)
