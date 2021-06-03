@@ -54,7 +54,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     """
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour[:8])
-    print(f"UTC time is {datetime.datetime.utcnow()}")
+    print(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
     print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
@@ -128,10 +128,10 @@ def scan(hours=1, station=None, message=None):
         message can be a comma-separated list of messages; defaults to all messages
     """
     while True:
-        next = datetime.datetime.now()+relativedelta(hours=hours)
+        next = datetime.datetime.utcnow()+relativedelta(hours=hours)
         fetch(station, message)
-        print(f"sleeping until {next}...")
-        time.sleep((next-datetime.datetime.now()).total_seconds())
+        print(f"sleeping {hours} hours until {str(next)[:16]} UTC...")
+        time.sleep((next-datetime.datetime.utcnow()).total_seconds())
 
 
 if __name__ == '__main__':
