@@ -1,5 +1,6 @@
 import datetime
 import glob
+import shutil
 import re
 import os
 import requests
@@ -24,10 +25,13 @@ def combine(dir):
     """Combines all files in the directory in a single file named {DATE}gts.txt
     :param dir: the directory to combine; should be named by date or date+hour"""
     dir = str(dir)
+    zczc = 0
     def readfile(fn):
+        nonlocal zczc
+        zczc += 1
         try:
             with open(fn, "r") as f:
-                return "\n".join((fn, f.read().strip()))
+                return "\n".join((f"ZCZC {zczc:03}", f.read().strip()))
         except Exception as e:
             print(f"skipping {fn}: {e}")
 
@@ -35,7 +39,14 @@ def combine(dir):
     # sort by filename, which is {datehour}-{message}{submessage}{messageid}.{station}..{ext}
     files.sort(key=lambda fn: os.path.split(fn)[1])
     data = "\n\n".join(info for fn in files if (info := readfile(fn)))
-    gtsfn = f"{dir[:8]}gts.txt"
+    gtstitle = f"{dir[:8]}gts"
+    gtsfn = f"{gtstitle}.txt"
+    # make a backup copy of the existing gts file
+    if os.path.exists(gtsfn):
+        num = max([int(i.group(1)) for n in glob.glob(f"{gtstitle}_*.txt") if (i := re.search("_(\d+).txt$", n))] or [0]) + 1
+        backupfn = f"{gtstitle}_{num}.txt"
+        print(f"backing up {gtsfn} as {backupfn}")
+        shutil.copy(gtsfn, backupfn)
     with open(gtsfn, "w") as f:
         f.write(data)
     print(f"wrote {len(data):,} bytes as {gtsfn}")
@@ -56,6 +67,11 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     dir = str(dir or datehour[:8])
     print(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
     print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
+    # make a backup copy of the existing folder
+    if os.path.exists(dir):
+        num = max([int(i.group(1)) for n in glob.glob(f"{dir}_*") if (i := re.search("_(\d+)$", n))] or [0]) + 1
+        print(f"backing up {dir} as {dir}_{num}")
+        shutil.copytree(dir, f"{dir}_{num}")
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
         if isinstance(station, str):
@@ -90,10 +106,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
             # create a filename for it inside the dn folder, and prepend the modified date+hour
             fn = url.replace("https://tgftp.nws.noaa.gov/data/raw/", dir+"/")
             fn = re.sub("/([^/]+)$", "/"+datehour_of(page.headers['last-modified'])+r'-\1', fn)
-            # +datehour_of(page.headers['last-modified'])+'-'
-            # the path is the place where the file will be stored on the hard drive
             path = fn.rsplit('/', 1)[0]
-            # create the path (the folders) if they don't already exist
             if not os.path.exists(path):
                 os.makedirs(path)
             # write the content of the web page as a new file (with filename fn)
