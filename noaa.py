@@ -41,12 +41,12 @@ def combine(dir):
     data = "\n\n".join(info for fn in files if (info := readfile(fn)))
     gtstitle = f"{dir[:8]}gts"
     gtsfn = f"{gtstitle}.txt"
-    # make a backup copy of the existing gts file
-    if os.path.exists(gtsfn):
-        num = max([int(i.group(1)) for n in glob.glob(f"{gtstitle}_*.txt") if (i := re.search("_(\d+).txt$", n))] or [0]) + 1
-        backupfn = f"{gtstitle}_{num}.txt"
-        print(f"backing up {gtsfn} as {backupfn}")
-        shutil.copy(gtsfn, backupfn)
+    # # make a backup copy of the existing gts file
+    # if os.path.exists(gtsfn):
+    #     num = max([int(i.group(1)) for n in glob.glob(f"{gtstitle}_*.txt") if (i := re.search("_(\d+).txt$", n))] or [0]) + 1
+    #     backupfn = f"{gtstitle}_{num}.txt"
+    #     print(f"backing up {gtsfn} as {backupfn}")
+    #     shutil.copy(gtsfn, backupfn)
     with open(gtsfn, "w") as f:
         f.write(data)
     print(f"wrote {len(data):,} bytes as {gtsfn}")
