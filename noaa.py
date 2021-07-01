@@ -41,12 +41,14 @@ def combine(dir):
     data = "\n\n".join(info for fn in files if (info := readfile(fn)))
     gtstitle = f"{dir[:8]}gts"
     gtsfn = f"{gtstitle}.txt"
+
     # # make a backup copy of the existing gts file
     # if os.path.exists(gtsfn):
     #     num = max([int(i.group(1)) for n in glob.glob(f"{gtstitle}_*.txt") if (i := re.search("_(\d+).txt$", n))] or [0]) + 1
     #     backupfn = f"{gtstitle}_{num}.txt"
     #     print(f"backing up {gtsfn} as {backupfn}")
     #     shutil.copy(gtsfn, backupfn)
+
     with open(gtsfn, "w") as f:
         f.write(data)
     print(f"wrote {len(data):,} bytes as {gtsfn}")
@@ -67,11 +69,13 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     dir = str(dir or datehour[:8])
     print(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
     print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
-    # make a backup copy of the existing folder
-    if os.path.exists(dir):
-        num = max([int(i.group(1)) for n in glob.glob(f"{dir}_*") if (i := re.search("_(\d+)$", n))] or [0]) + 1
-        print(f"backing up {dir} as {dir}_{num}")
-        shutil.copytree(dir, f"{dir}_{num}")
+
+    # # make a backup copy of the existing folder
+    # if os.path.exists(dir):
+    #     num = max([int(i.group(1)) for n in glob.glob(f"{dir}_*") if (i := re.search("_(\d+)$", n))] or [0]) + 1
+    #     print(f"backing up {dir} as {dir}_{num}")
+    #     shutil.copytree(dir, f"{dir}_{num}")
+
     # station and message should both be lowercase and delimited for matching in URLs
     if station:
         if isinstance(station, str):
