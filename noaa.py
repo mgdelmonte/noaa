@@ -74,6 +74,10 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     :param datehour: the date or date+hour to fetch; if blank, defaults to "today"
     :param dir: the directory to store data into; defaults to same value as datehour
     """
+    global LogFn
+    if not LogFn:
+        LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H s={station or 'all'} m={message or 'all'}.log")
+
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour[:8])
     log(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
