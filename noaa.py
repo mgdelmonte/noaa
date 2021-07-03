@@ -11,6 +11,15 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 
+LogFn = None
+
+def log(line):
+    print(line)
+    if LogFn:
+        with open(LogFn, 'a') as f:
+            f.write(line+'\n')
+
+
 def date_of(s):
     try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d")
     except: return parse(s).strftime("%Y%m%d")
@@ -67,8 +76,8 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     """
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour[:8])
-    print(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
-    print(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
+    log(f"current time is {str(datetime.datetime.utcnow())[:16]} UTC")
+    log(f"storing NOAA %s messages from %s for {datehour[:8]}" % (message or "all", station or "(all stations)"))
 
     # # make a backup copy of the existing folder
     # if os.path.exists(dir):
@@ -90,7 +99,6 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     todo = ["https://tgftp.nws.noaa.gov/data/raw/"]
     while todo:
         url = todo.pop()
-        # print(url)
         try:
             page = session.get(url)
         except Exception as e:
@@ -131,7 +139,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
                 modified = datehour_of(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text)
                 # if modified == datehour: # would match date+hour
                 if modified[:8] == datehour[:8]: # match only date
-                    print(f"{modified} {u}")
+                    log(f"{modified} {u}")
                     todo.append(u)
     combine(dir)
 
@@ -144,6 +152,8 @@ def scan(hours=1, station=None, message=None):
     :param message: file must have "/{message}/" in the URL
         message can be a comma-separated list of messages; defaults to all messages
     """
+    global LogFn
+    LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H h={hours} s={station or 'all'} m={message or 'all'}.log")
     while True:
         next = datetime.datetime.utcnow()+relativedelta(hours=hours)
         fetch(station, message)
