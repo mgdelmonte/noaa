@@ -1,0 +1,4 @@
+fire
+lxml
+python-dateutil
+requests
