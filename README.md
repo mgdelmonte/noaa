@@ -5,8 +5,8 @@ It also creates a chronological summary file named YYYYMMDD.gts, which contains 
 
 # Installation
 
-* install Python 3
-* `pip install -r requirements.txt`
+- install Python 3
+- `pip install -r requirements.txt`
 
 # Running
 
@@ -14,7 +14,7 @@ It also creates a chronological summary file named YYYYMMDD.gts, which contains 
 
 # Examples
 
-`python noaa.py fetch --station=liib` fetches all messages from station "liib"
-`python noaa.py fetch --message=sa,sz` fetches "sa" and "sz" messages from all stations
-`python noaa.py scan --message=sa,sz --station=liib hours=3` fetches "sa" and "sz" messages from station "liib" every three hours
+- `python noaa.py fetch --station=liib` fetches all messages from station "liib"
+- `python noaa.py fetch --message=sa,sz` fetches "sa" and "sz" messages from all stations
+- `python noaa.py scan --message=sa,sz --station=liib hours=3` fetches "sa" and "sz" messages from station "liib" every three hours
 
