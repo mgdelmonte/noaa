@@ -46,7 +46,7 @@ def fetch(which=None, date=None, proxy=None, scan=None):
     maxhrs, maxt, maxfile = 0, None, None
     date = date_of(date) or datetime.date.today()
     print("fetching", date, which)
-    fn = date.strftime("%Y-%m-%d-EOAS-{which}-GTS.txt")
+    fn = date.strftime(f"%Y-%m-%d-EOAS-{which}-GTS.txt")
     if os.path.exists(fn):
         os.remove(fn)
     session = requests.Session()
