@@ -63,9 +63,9 @@ def combine(dir):
     print(f"wrote {len(data):,} bytes as {gtsfn}")
 
 
-def fetch(station=None, message=None, datehour=None, dir=None):
+def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
     """Fetches all NOAA files, optionally matching station and/or message,
-        and saves them in date-labeled folder (YYYYMMDD).
+        and saves them in a date-labeled folder (YYYYMMDD).
         The files will have the date+hour prepended to their filenames.
     :param station: file must have ".{station}." in the URL; default=liib
         station can be a comma-separated list of stations; defaults to all stations
@@ -73,10 +73,17 @@ def fetch(station=None, message=None, datehour=None, dir=None):
         message can be a comma-separated list of messages; defaults to all messages
     :param datehour: the date or date+hour to fetch; if blank, defaults to "today"
     :param dir: the directory to store data into; defaults to same value as datehour
+    :param scan: will rescan every <scan> hours for new files
     """
     global LogFn
     if not LogFn:
         LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H s={station or 'all'} m={message or 'all'}.log")
+
+    while scan:
+        next = datetime.datetime.utcnow()+relativedelta(hours=scan)
+        fetch(station, message, datehour, dir)
+        print(f"sleeping {scan} hours until {str(next)[:16]} UTC...")
+        time.sleep((next-datetime.datetime.utcnow()).total_seconds())
 
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour[:8])
@@ -148,24 +155,7 @@ def fetch(station=None, message=None, datehour=None, dir=None):
     combine(dir)
 
 
-def scan(hours=1, station=None, message=None):
-    """Perform the "fetch" command continuously at intervals.
-    :param interval: the time between fetches, in hours; defaults to 1
-    :param station: file must have ".{station}." in the URL; default=liib
-        station can be a comma-separated list of stations; defaults to all stations
-    :param message: file must have "/{message}/" in the URL
-        message can be a comma-separated list of messages; defaults to all messages
-    """
-    global LogFn
-    LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H h={hours} s={station or 'all'} m={message or 'all'}.log")
-    while True:
-        next = datetime.datetime.utcnow()+relativedelta(hours=hours)
-        fetch(station, message)
-        print(f"sleeping {hours} hours until {str(next)[:16]} UTC...")
-        time.sleep((next-datetime.datetime.utcnow()).total_seconds())
-
-
 if __name__ == '__main__':
     import fire
-    fire.Fire()
+    fire.Fire(fetch)
 
