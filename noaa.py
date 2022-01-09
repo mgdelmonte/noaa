@@ -77,7 +77,8 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
     """
     global LogFn
     if not LogFn:
-        LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H s={station or 'all'} m={message or 'all'}.log")
+        s, m = ("all" if not x else str(len(x)) if isinstance(x, tuple) else str(x.count(",")+1) if ',' in x else x for x in (station, message))
+        LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H s={s} m={m}.log")
 
     while scan:
         next = datetime.datetime.utcnow()+relativedelta(hours=scan)
