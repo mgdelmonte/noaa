@@ -44,7 +44,7 @@ def fetch(which=None, date=None, proxy=None, scan=None):
             fetch(which, date, proxy)
         return
     maxhrs, maxt, maxfile = 0, None, None
-    date = date_of(date) or datetime.date.today()
+    date = date_of(date) or datetime.datetime.utcnow().date()
     print("fetching", date, which)
     fn = date.strftime(f"%Y-%m-%d-EOAS-{which}-GTS.txt")
     if os.path.exists(fn):
@@ -76,8 +76,11 @@ def fetch(which=None, date=None, proxy=None, scan=None):
             elif old != cs:
                 print("updated", url)
             md5s[url] = cs
-            with open(fn, 'a') as f:
-                f.write(add_zczc(page.text))
+            try:
+                with open(fn, 'a') as f:
+                    f.write(add_zczc(page.text))
+            except Exception as e:
+                print(f"skipping {fn}: {e}")
             continue
         h = lxml.html.fromstring(page.content, url)
         for e in reversed(h.xpath("//a")):
@@ -101,4 +104,3 @@ def fetch(which=None, date=None, proxy=None, scan=None):
 if __name__ == '__main__':
     import fire
     fire.Fire(fetch)
-

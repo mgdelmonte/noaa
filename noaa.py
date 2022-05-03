@@ -47,6 +47,7 @@ def combine(dir):
     files = glob.glob(f"{dir}/**/*.txt", recursive=True)
     # sort by filename, which is {datehour}-{message}{submessage}{messageid}.{station}..{ext}
     files.sort(key=lambda fn: os.path.split(fn)[1])
+    print(f"combining {len(files)} files...")
     data = "\n\n".join(info for fn in files if (info := readfile(fn)))
     gtstitle = f"{dir[:8]}gts"
     gtsfn = f"{gtstitle}.txt"
@@ -82,6 +83,7 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
 
     while scan:
         next = datetime.datetime.utcnow()+relativedelta(hours=scan)
+        LogFn = None
         fetch(station, message, datehour, dir)
         print(f"sleeping {scan} hours until {str(next)[:16]} UTC...")
         time.sleep((next-datetime.datetime.utcnow()).total_seconds())
@@ -159,4 +161,3 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
 if __name__ == '__main__':
     import fire
     fire.Fire(fetch)
-
