@@ -77,7 +77,7 @@ def fetch(which=None, date=None, proxy=None, scan=None):
                 print("updated", url)
             md5s[url] = cs
             try:
-                with open(fn, 'a') as f:
+                with open(fn, 'a', encoding='utf8') as f:
                     f.write(add_zczc(page.text))
             except Exception as e:
                 print(f"skipping {fn}: {e}")
