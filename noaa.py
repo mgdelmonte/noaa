@@ -79,11 +79,13 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
     global LogFn
     if not LogFn:
         s, m = ("all" if not x else str(len(x)) if isinstance(x, tuple) else str(x.count(",")+1) if ',' in x else x for x in (station, message))
-        LogFn = (datetime.datetime.utcnow()).strftime(f"%Y%m%d%H s={s} m={m}.log")
+        LogFn = datetime.datetime.utcnow().strftime(f"%Y%m%d%H s={s} m={m}.log")
 
     while scan:
         next = datetime.datetime.utcnow()+relativedelta(hours=scan)
-        LogFn = None
+        # change log file when date changes
+        if LogFn and not LogFn.startswith(datetime.datetime.utcnow().strftime("%Y%m%d")):
+            LogFn = None
         fetch(station, message, datehour, dir)
         print(f"sleeping {scan} hours until {str(next)[:16]} UTC...")
         time.sleep((next-datetime.datetime.utcnow()).total_seconds())
