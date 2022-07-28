@@ -47,8 +47,6 @@ def fetch(which=None, date=None, proxy=None, scan=None):
     date = date_of(date) or datetime.date.today()
     print("fetching", date, which)
     fn = date.strftime(f"%Y-%m-%d-EOAS-{which}-GTS.txt")
-    if os.path.exists(fn):
-        os.remove(fn)
     session = requests.Session()
     if proxy:
         if not re.match("https?://", proxy):
@@ -76,6 +74,8 @@ def fetch(which=None, date=None, proxy=None, scan=None):
             elif old != cs:
                 print("updated", url)
             md5s[url] = cs
+            if os.path.exists(fn):
+                os.remove(fn)
             with open(fn, 'a') as f:
                 f.write(add_zczc(page.text))
             continue
