@@ -60,7 +60,7 @@ def fetch(which=None, date=None, proxy=None, scan=None):
     while todo:
         url = todo.pop()
         try:
-            page = session.get(url)
+            page = session.get(url, timeout=30)
         except Exception as e:
             print(f"unable to get {url}; skipping")
             continue
