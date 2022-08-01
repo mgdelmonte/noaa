@@ -11,14 +11,19 @@ from dateutil.relativedelta import relativedelta
 
 md5s = {}
 
+
 def date_of(s):
-    try: return parse(s)
-    except: return None
+    try:
+        return parse(s)
+    except Exception:
+        return None
 
 
 def datehour_of(s):
-    try: return datetime.datetime.strptime(s, '%Y%m%d%H')
-    except: return parse(s)
+    try:
+        return datetime.datetime.strptime(s, '%Y%m%d%H')
+    except Exception:
+        return parse(s)
 
 
 def add_zczc(text):
@@ -65,7 +70,7 @@ def fetch(which=None, date=None, proxy=None, scan=None):
         try:
             page = session.get(url, timeout=30)
         except Exception as e:
-            print(f"unable to get {url}; skipping")
+            print(f"unable to get {url}; skipping because {e}")
             continue
         if not page.ok:
             print(f"got status {page.status_code} for {url}; skipping")

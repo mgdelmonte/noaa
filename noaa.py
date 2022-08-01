@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 
 LogFn = None
 
+
 def log(line):
     print(line)
     if LogFn:
@@ -20,35 +21,40 @@ def log(line):
 
 
 def date_of(s):
-    try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d")
-    except: return parse(s).strftime("%Y%m%d")
+    try:
+        return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d")
+    except Exception:
+        return parse(s).strftime("%Y%m%d")
 
 
 def datehour_of(s):
-    try: return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d%H")
-    except: return parse(s).strftime("%Y%m%d%H")
+    try:
+        return datetime.datetime.strptime(s, '%Y%m%d%H').strftime("%Y%m%d%H")
+    except Exception:
+        return parse(s).strftime("%Y%m%d%H")
 
 
-def combine(dir):
+def combine(dn):
     """Combines all files in the directory in a single file named {DATE}gts.txt
-    :param dir: the directory to combine; should be named by date or date+hour"""
-    dir = str(dir)
+    :param dn: the directory to combine; should be named by date or date+hour"""
+    dn = str(dn)
     zczc = 0
+
     def readfile(fn):
         nonlocal zczc
         zczc += 1
         try:
-            with open(fn, "r") as f:
-                return "\n".join((f"ZCZC {zczc:03}", f.read().strip()))
+            with open(fn, "r") as fn:
+                return "\n".join((f"ZCZC {zczc:03}", fn.read().strip()))
         except Exception as e:
             print(f"skipping {fn}: {e}")
 
-    files = glob.glob(f"{dir}/**/*.txt", recursive=True)
+    files = glob.glob(f"{dn}/**/*.txt", recursive=True)
     # sort by filename, which is {datehour}-{message}{submessage}{messageid}.{station}..{ext}
     files.sort(key=lambda fn: os.path.split(fn)[1])
     print(f"combining {len(files)} files...")
     data = "\n\n".join(info for fn in files if (info := readfile(fn)))
-    gtstitle = f"{dir[:8]}gts"
+    gtstitle = f"{dn[:8]}gts"
     gtsfn = f"{gtstitle}.txt"
 
     # # make a backup copy of the existing gts file
@@ -153,7 +159,7 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
             elif u.endswith(".txt") and (not station or station.search(u)) and (not message or message.search(u)):
                 modified = datehour_of(e.xpath("./ancestor::td[1]/following-sibling::td[1]")[0].text)
                 # if modified == datehour: # would match date+hour
-                if modified[:8] == datehour[:8]: # match only date
+                if modified[:8] == datehour[:8]:  # match only date
                     log(f"{modified} {u}")
                     todo.append(u)
     combine(dir)
