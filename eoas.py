@@ -7,7 +7,7 @@ import lxml.html
 import urllib
 import hashlib
 from dateutil.parser import parse
-
+from dateutil.relativedelta import relativedelta
 
 md5s = {}
 
@@ -36,9 +36,10 @@ def fetch(which=None, date=None, proxy=None, scan=None):
     """
     which = which or "syn"
     while scan:
+        next_start = datetime.datetime.utcnow() + relativedelta(hours=scan)
         fetch(which, date, proxy, scan=False)
-        print(f"sleeping {scan} hours")
-        time.sleep(scan*3600)
+        print(f"sleeping {scan} hours until {str(next_start)[:16]} UTC...")
+        time.sleep((next_start - datetime.datetime.utcnow()).total_seconds())
     if which == "all":
         for which in ("syn", "metar", "aircraft"):
             fetch(which, date, proxy)
@@ -57,6 +58,8 @@ def fetch(which=None, date=None, proxy=None, scan=None):
     # todo is a list of all the URLs we want to fetch
     todo = [f"http://rawdata.eoas.fsu.edu/{which}/"]
     wanted = re.compile(f"{date.strftime('%Y%m%d')}/$|\.[a-z]+$")
+    fetched = 0
+    total_bytes = 0
     while todo:
         url = todo.pop()
         try:
@@ -79,6 +82,8 @@ def fetch(which=None, date=None, proxy=None, scan=None):
             try:
                 with open(fn, 'a', encoding='utf8') as f:
                     f.write(add_zczc(page.text))
+                fetched += 1
+                total_bytes += len(page.text)
             except Exception as e:
                 print(f"skipping {fn}: {e}")
             continue
@@ -99,6 +104,8 @@ def fetch(which=None, date=None, proxy=None, scan=None):
                 todo.append(u)
     if maxfile and scan is None:
         print(f'oldest update is {maxfile} updated {maxt}, {maxhrs:0.1f} hours later')
+    print(f"fetched {fetched:,} files")
+    print(f"wrote {total_bytes:,} as {fn}")
 
 
 if __name__ == '__main__':

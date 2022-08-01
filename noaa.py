@@ -1,6 +1,5 @@
 import datetime
 import glob
-import shutil
 import re
 import os
 import requests
@@ -82,13 +81,13 @@ def fetch(station=None, message=None, datehour=None, dir=None, scan=None):
         LogFn = datetime.datetime.utcnow().strftime(f"%Y%m%d%H s={s} m={m}.log")
 
     while scan:
-        next = datetime.datetime.utcnow()+relativedelta(hours=scan)
+        next_start = datetime.datetime.utcnow()+relativedelta(hours=scan)
         # change log file when date changes
         if LogFn and not LogFn.startswith(datetime.datetime.utcnow().strftime("%Y%m%d")):
             LogFn = None
         fetch(station, message, datehour, dir)
-        print(f"sleeping {scan} hours until {str(next)[:16]} UTC...")
-        time.sleep((next-datetime.datetime.utcnow()).total_seconds())
+        print(f"sleeping {scan} hours until {str(next_start)[:16]} UTC...")
+        time.sleep((next_start-datetime.datetime.utcnow()).total_seconds())
 
     datehour = datehour_of(str(datehour)) if datehour else (datetime.datetime.utcnow()-relativedelta(hours=1)).strftime("%Y%m%d%H")
     dir = str(dir or datehour[:8])
